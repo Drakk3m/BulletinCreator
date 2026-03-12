@@ -126,8 +126,9 @@ NewsletterCreator
 └── assets
     ├── banner_newsletter_creator.png
     ├── screenshot_editor.png
-    ├── screenshot_layouts.png
-    ├── screenshot_layouts_columns.png
+    ├── screenshot_editnews.png
+    ├── screenshot_layout.png
+    ├── screenshot_layout_columns.png
     └── screenshot_translation.png
 ```
 
