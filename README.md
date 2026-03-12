@@ -117,7 +117,7 @@ All images are stored as **Base64** so the newsletter remains fully self-contain
 ---
 
 ## 📦 File Structure
-
+```
 NewsletterCreator
 │
 ├── BoletinCreator.html
@@ -129,6 +129,7 @@ NewsletterCreator
     ├── screenshot_layouts.png
     ├── screenshot_layouts_columns.png
     └── screenshot_translation.png
+```
 
 
 The entire application lives inside a **single HTML file**, making it easy to distribute and use offline.
@@ -191,8 +192,11 @@ A single HTML file that becomes a **complete visual editor**.
 ![Editor](assets/screenshot_editor.png)
 
 ### Layout Styles
-![List Layout](assets/screenshot_layouts.png)
-![Column Layout](assets/screenshot_layouts_columns.png)
+![List Layout](assets/screenshot_layout.png)
+![Column Layout](assets/screenshot_layout_columns.png)
 
 ### Translation & Export
 ![Translation](assets/screenshot_translation.png)
+
+### Editing an already added news
+![Translation](assets/screenshot_editnews.png)
