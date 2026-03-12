@@ -155,6 +155,7 @@ This tool is ideal for:
 - Designed for **small to medium newsletters**
 - Translation APIs may occasionally fail if services are unavailable
 - Large images increase file size because they are stored in Base64
+- UI is completely in Spanish.
 
 ---
 
@@ -168,6 +169,7 @@ Possible enhancements:
 - Newsletter templates
 - Cloud saving
 - Multi-page PDF export
+- Multi Language UI Support
 
 ---
 
