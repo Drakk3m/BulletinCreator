@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Boletín de Noticias</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+        }
+
+        /* Panel de Control */
+        .control-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .panel-section h3 {
+            margin-bottom: 15px;
+            color: #00d4ff;
+            font-size: 1.1em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #2ed573, #7bed9f);
+            color: white;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .image-position-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .image-position-selector label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        .image-position-selector label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .image-position-selector input[type="radio"] {
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            color: #333;
+            min-height: 80vh;
+        }
+
+        .newsletter-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding: 20px;
+        }
+
+        .newsletter-header.has-banner {
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .newsletter-header.banner-background {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .newsletter-header.banner-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+        }
+
+        .newsletter-header.banner-background .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .newsletter-title {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header-banner {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        /* Layout Styles */
+        .news-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Columnas Layout */
+        .news-container.columns-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .news-container.columns-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .news-container.columns-2 .section-item,
+        .news-container.columns-3 .section-item {
+            grid-column: 1 / -1;
+        }
+
+        /* Comic Layout */
+        .news-container.comic-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-start;
+            align-content: flex-start;
+        }
+
+        .news-container.comic-layout .section-item {
+            width: 100% !important;
+            flex-basis: 100% !important;
+            min-width: 100% !important;
+        }
+
+        /* News Item Styles */
+        .news-item {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            transition: box-shadow 0.3s ease;
+            cursor: move;
+        }
+
+        .news-item:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .news-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+        }
+
+        .news-item.drag-over {
+            border: 2px dashed #00d4ff;
+        }
+
+        /* Comic Style for News */
+        .comic-layout .news-item {
+            border: 4px solid #333;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+
+        .comic-layout .news-item .news-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            overflow: auto;
+        }
+
+        /* Resize handle for comic */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: se-resize;
+            background: linear-gradient(135deg, transparent 50%, #333 50%);
+            border-radius: 0 0 5px 0;
+        }
+
+        .news-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+        }
+
+        .news-text {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .news-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .news-item.image-background {
+            background-size: cover;
+            background-position: center;
+            color: white;
+        }
+
+        .news-item.image-background .news-content {
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .news-item.image-background .news-title,
+        .news-item.image-background .news-text {
+            color: white;
+        }
+
+        /* Section Styles */
+        .section-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            cursor: move;
+        }
+
+        .section-item.image-background {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .section-item.image-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+        }
+
+        .section-item.image-background .section-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .section-image {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        /* Comic style for sections */
+        .comic-layout .section-item {
+            border: 4px solid #333;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%);
+            color: #333;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .comic-layout .section-item .section-title {
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0 #fff;
+        }
+
+        /* Item Controls */
+        .item-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .news-item:hover .item-controls,
+        .section-item:hover .item-controls {
+            opacity: 1;
+        }
+
+        .item-controls button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+
+        /* Current Image Preview in Edit Modal */
+        .current-image-container {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .current-image-container img {
+            max-width: 100%;
+            max-height: 100px;
+            border-radius: 8px;
+        }
+
+        .current-image-container .image-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Translation Panel */
+        .translation-panel {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .translation-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .translation-status.loading {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .translation-status.success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .translation-status.error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                max-height: none;
+            }
+
+            .news-container.columns-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .news-container.columns-2,
+            .news-container.columns-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            .control-panel, .item-controls, .resize-handle {
+                display: none !important;
+            }
+            
+            .preview-panel {
+                box-shadow: none;
+            }
+        }
+
+        /* File Input Styling */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #00d4ff;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 100px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 10px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Drag indicator */
+        .drag-handle {
+            cursor: move;
+            padding: 5px;
+            color: #999;
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+
+        /* Column selector */
+        .column-selector {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .column-selector.visible {
+            display: block;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay p {
+            color: white;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📰 Generador de Boletín de Noticias</h1>
+        
+        <div class="main-layout">
+            <!-- Panel de Control -->
+            <div class="control-panel">
+                <!-- Configuración del Boletín -->
+                <div class="panel-section">
+                    <h3>📋 Configuración del Boletín</h3>
+                    <label>Título del Boletín</label>
+                    <input type="text" id="newsletterTitle" placeholder="Mi Boletín de Noticias" value="Boletín Informativo">
+                    
+                    <label>Banner del Título</label>
+                    <div class="file-input-wrapper">
+                        <label class="file-input-label">
+                            📷 Seleccionar imagen de banner
+                            <input type="file" id="bannerImage" accept="image/*" onchange="previewBanner(this)">
+                        </label>
+                    </div>
+                    <img id="bannerPreview" class="image-preview" style="display:none;">
+                    
+                    <label>Posición del Banner</label>
+                    <div class="image-position-selector">
+                        <label><input type="radio" name="bannerPosition" value="above" checked> Arriba</label>
+                        <label><input type="radio" name="bannerPosition" value="below"> Abajo</label>
+                        <label><input type="radio" name="bannerPosition" value="background"> Fondo</label>
+                    </div>
+                    
+                    <label>Estilo de Diseño</label>
+                    <select id="layoutStyle" onchange="updateLayout()">
+                        <option value="normal">Normal (Lista)</option>
+                        <option value="columns">Columnas</option>
+                        <option value="comic">Estilo Cómic</option>
+                    </select>
+
+                    <div id="columnSelector" class="column-selector">
+                        <label>Número de Columnas</label>
+                        <select id="columnCount" onchange="updateLayout()">
+                            <option value="2">2 Columnas</option>
+                            <option value="3">3 Columnas</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-primary" onclick="updateNewsletterHeader()">Actualizar Encabezado</button>
+                </div>
+
+                <!-- Tabs para Agregar Contenido -->
+                <div class="panel-section">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('news')">📰 Noticia</button>
+                        <button class="tab" onclick="switchTab('section')">📑 Sección</button>
+                    </div>
+
+                    <!-- Tab Noticia -->
+                    <div id="newsTab" class="tab-content active">
+                        <h3>Agregar Noticia</h3>
+                        <label>Título de la Noticia</label>
+                        <input type="text" id="newsTitle" placeholder="Título de la noticia">
+                        
+                        <label>Contenido</label>
+                        <textarea id="newsContent" placeholder="Escribe el contenido de la noticia..."></textarea>
+                        
+                        <label>Imagen (opcional)</label>
+                        <div class="file-input-wrapper">
+                            <label class="file-input-label">
+                                📷 Seleccionar imagen
+                                <input type="file" id="newsImage" accept="image/*" onchange="previewNewsImage(this)">
+                            </label>
+                        </div>
+                        <img id="newsImagePreview" class="image-preview" style="display:none;">
+                        
+                        <label>Posición de la Imagen</label>
+                        <div class="image-position-selector">
+                            <label><input type="radio" name="newsImagePosition" value="above" checked> Arriba</label>
+                            <label><input type="radio" name="newsImagePosition" value="below"> Abajo</label>
+                            <label><input type="radio" name="newsImagePosition" value="background"> Fondo</label>
+                        </div>
+                        
+                        <button class="btn-primary" onclick="addNews()">➕ Agregar Noticia</button>
+                    </div>
+
+                    <!-- Tab Sección -->
+                    <div id="sectionTab" class="tab-content">
+                        <h3>Agregar Sección</h3>
+                        <label>Título de la Sección</label>
+                        <input type="text" id="sectionTitle" placeholder="Título de la sección">
+                        
+                        <label>Imagen (opcional)</label>
+                        <div class="file-input-wrapper">
+                            <label class="file-input-label">
+                                📷 Seleccionar imagen
+                                <input type="file" id="sectionImage" accept="image/*" onchange="previewSectionImage(this)">
+                            </label>
+                        </div>
+                        <img id="sectionImagePreview" class="image-preview" style="display:none;">
+                        
+                        <label>Posición de la Imagen</label>
+                        <div class="image-position-selector">
+                            <label><input type="radio" name="sectionImagePosition" value="above" checked> Arriba</label>
+                            <label><input type="radio" name="sectionImagePosition" value="below"> Abajo</label>
+                            <label><input type="radio" name="sectionImagePosition" value="background"> Fondo</label>
+                        </div>
+                        
+                        <button class="btn-success" onclick="addSection()">➕ Agregar Sección</button>
+                    </div>
+                </div>
+
+                <!-- Traducción -->
+                <div class="panel-section">
+                    <h3>🌐 Traducción Automática</h3>
+                    <div class="translation-panel">
+                        <label>Idioma origen:</label>
+                        <select id="sourceLanguage">
+                            <option value="es">Español</option>
+                            <option value="en">Inglés</option>
+                            <option value="fr">Francés</option>
+                            <option value="pt">Portugués</option>
+                        </select>
+                        
+                        <label>Traducir a:</label>
+                        <select id="targetLanguage">
+                            <option value="">Seleccionar idioma...</option>
+                            <option value="en">Inglés</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Francés</option>
+                            <option value="pt">Portugués</option>
+                        </select>
+                        <button class="btn-secondary" onclick="translateNewsletter()">🔄 Traducir Boletín</button>
+                        <button class="btn-secondary" onclick="restoreOriginal()">↩️ Restaurar Original</button>
+                        <div id="translationStatus"></div>
+                    </div>
+                </div>
+				
+				<!-- Exportar e Importar -->
+                <div class="panel-section">
+                    <h3>💾 Acciones</h3>
+                    <button class="btn-secondary" onclick="saveToJSON()">💾 Guardar JSON</button>
+					<button class="btn-secondary" onclick="saveToXML()">💾 Guardar XML</button>
+					<button class="btn-secondary" onclick="document.getElementById('loadFile').click()">📂 Cargar</button>
+					<input type="file" id="loadFile" accept=".json,.xml" style="display:none" onchange="loadFile(event)">
+                </div>
+
+                <!-- Exportar -->
+                <div class="panel-section">
+                    <h3>📤 Exportar</h3>
+                    <button class="btn-primary" onclick="generatePDF()">📄 Generar PDF</button>
+                    <button class="btn-secondary" onclick="clearAll()">🗑️ Limpiar Todo</button>
+                </div>
+            </div>
+
+            <!-- Panel de Vista Previa -->
+            <div class="preview-panel" id="previewPanel">
+                <div class="newsletter-header" id="newsletterHeader">
+                    <div class="header-content">
+                        <h1 class="newsletter-title" id="displayTitle">Boletín Informativo</h1>
+                    </div>
+                </div>
+                
+                <div class="news-container" id="newsContainer">
+                    <p style="text-align: center; color: #999; padding: 50px;">
+                        Agrega noticias y secciones para comenzar a crear tu boletín
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Editar</h3>
+            <input type="hidden" id="editItemId">
+            <input type="hidden" id="editItemType">
+            
+            <div id="editNewsFields">
+                <label>Título</label>
+                <input type="text" id="editTitle">
+                
+                <div id="editContentContainer">
+                    <label>Contenido</label>
+                    <textarea id="editContent"></textarea>
+                </div>
+                
+                <!-- Current Image Display -->
+                <div id="currentImageContainer" class="current-image-container" style="display:none;">
+                    <label>Imagen Actual:</label>
+                    <img id="currentImagePreview" src="" alt="Imagen actual">
+                    <div class="image-actions">
+                        <button class="btn-danger btn-small" onclick="removeCurrentImage()">🗑️ Eliminar Imagen</button>
+                    </div>
+                </div>
+                
+                <label>Nueva Imagen (opcional)</label>
+                <div class="file-input-wrapper">
+                    <label class="file-input-label">
+                        📷 Agregar/Cambiar imagen
+                        <input type="file" id="editImage" accept="image/*" onchange="previewEditImage(this)">
+                    </label>
+                </div>
+                <img id="editImagePreview" class="image-preview" style="display:none;">
+                
+                <label>Posición de la Imagen</label>
+                <div class="image-position-selector">
+                    <label><input type="radio" name="editImagePosition" value="above"> Arriba</label>
+                    <label><input type="radio" name="editImagePosition" value="below"> Abajo</label>
+                    <label><input type="radio" name="editImagePosition" value="background"> Fondo</label>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveEdit()">💾 Guardar</button>
+            <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // Estado de la aplicación
+        let items = [];
+        let itemIdCounter = 0;
+        let bannerImageData = null;
+        let editImageToRemove = false;
+        let newEditImage = null;
+
+        // Funciones de Tab
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        // Preview de imágenes
+        function previewBanner(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    bannerImageData = e.target.result;
+                    document.getElementById('bannerPreview').src = e.target.result;
+                    document.getElementById('bannerPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewNewsImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('newsImagePreview').src = e.target.result;
+                    document.getElementById('newsImagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewSectionImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('sectionImagePreview').src = e.target.result;
+                    document.getElementById('sectionImagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewEditImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newEditImage = e.target.result;
+                    document.getElementById('editImagePreview').src = e.target.result;
+                    document.getElementById('editImagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function updateNewsletterHeader() {
+			const title = document.getElementById('newsletterTitle').value;
+			const bannerPosition = document.querySelector('input[name="bannerPosition"]:checked')?.value || 'above';
+			const header = document.getElementById('newsletterHeader');
+
+			// Reset clases
+			header.className = 'newsletter-header';
+			header.style.backgroundImage = '';
+
+			// Header content (crear si no existe)
+			let content = header.querySelector('.header-content');
+			if (!content) {
+				content = document.createElement('div');
+				content.className = 'header-content';
+				header.appendChild(content);
+			}
+
+			// Título (crear si no existe)
+			let titleEl = content.querySelector('.newsletter-title');
+			if (!titleEl) {
+				titleEl = document.createElement('h1');
+				titleEl.className = 'newsletter-title';
+				content.appendChild(titleEl);
+			}
+			titleEl.textContent = title;
+
+			// Banner (crear si no existe)
+			let bannerEl = content.querySelector('.header-banner');
+			if (!bannerEl && bannerImageData) {
+				bannerEl = document.createElement('img');
+				bannerEl.className = 'header-banner';
+			}
+
+			// Limpiar contenido excepto título
+			content.querySelectorAll('.header-banner').forEach(b => b.remove());
+
+			if (bannerImageData) {
+				if (bannerPosition === 'background') {
+					header.classList.add('has-banner', 'banner-background');
+					header.style.backgroundImage = `url(${bannerImageData})`;
+				} else if (bannerPosition === 'above') {
+					content.insertBefore(bannerEl, titleEl);
+					bannerEl.src = bannerImageData;
+				} else {
+					content.appendChild(bannerEl);
+					bannerEl.src = bannerImageData;
+				}
+			}
+		}
+
+        // Agregar noticia
+        function addNews() {
+            const title = document.getElementById('newsTitle').value;
+            const content = document.getElementById('newsContent').value;
+            const imagePosition = document.querySelector('input[name="newsImagePosition"]:checked').value;
+            
+            if (!title || !content) {
+                alert('Por favor, completa el título y el contenido de la noticia.');
+                return;
+            }
+
+            const newsItem = {
+                id: itemIdCounter++,
+                type: 'news',
+                title: title,
+                content: content,
+                image: null,
+                imagePosition: imagePosition,
+                originalTitle: title,
+                originalContent: content,
+                width: 300,
+                height: 200
+            };
+
+            const preview = document.getElementById('newsImagePreview');
+            if (preview.style.display !== 'none' && preview.src) {
+                newsItem.image = preview.src;
+            }
+
+            items.push(newsItem);
+            renderItems();
+            clearNewsForm();
+        }
+
+        // Agregar sección
+        function addSection() {
+            const title = document.getElementById('sectionTitle').value;
+            const imagePosition = document.querySelector('input[name="sectionImagePosition"]:checked').value;
+            
+            if (!title) {
+                alert('Por favor, ingresa el título de la sección.');
+                return;
+            }
+
+            const sectionItem = {
+                id: itemIdCounter++,
+                type: 'section',
+                title: title,
+                image: null,
+                imagePosition: imagePosition,
+                originalTitle: title
+            };
+
+            const preview = document.getElementById('sectionImagePreview');
+            if (preview.style.display !== 'none' && preview.src) {
+                sectionItem.image = preview.src;
+            }
+
+            items.push(sectionItem);
+            renderItems();
+            clearSectionForm();
+        }
+
+        // Limpiar formularios
+        function clearNewsForm() {
+            document.getElementById('newsTitle').value = '';
+            document.getElementById('newsContent').value = '';
+            document.getElementById('newsImage').value = '';
+            document.getElementById('newsImagePreview').style.display = 'none';
+            document.getElementById('newsImagePreview').src = '';
+        }
+
+        function clearSectionForm() {
+            document.getElementById('sectionTitle').value = '';
+            document.getElementById('sectionImage').value = '';
+            document.getElementById('sectionImagePreview').style.display = 'none';
+            document.getElementById('sectionImagePreview').src = '';
+        }
+
+        // Renderizar items
+        function renderItems() {
+            const container = document.getElementById('newsContainer');
+            const layout = document.getElementById('layoutStyle').value;
+            
+            if (items.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 50px;">Agrega noticias y secciones para comenzar a crear tu boletín</p>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                if (item.type === 'news') {
+                    return renderNewsItem(item, layout);
+                } else {
+                    return renderSectionItem(item, layout);
+                }
+            }).join('');
+
+            setupDragAndDrop();
+            
+            if (layout === 'comic') {
+                setupResizeHandles();
+            }
+        }
+
+        function renderNewsItem(item, layout) {
+            let imageHTML = '';
+            let backgroundStyle = '';
+            let extraClass = '';
+            let sizeStyle = '';
+
+            if (item.image) {
+                if (item.imagePosition === 'background') {
+                    backgroundStyle = `background-image: url(${item.image});`;
+                    extraClass = 'image-background';
+                } else {
+                    imageHTML = `<img src="${item.image}" class="news-image">`;
+                }
+            }
+
+            // Apply size for comic layout
+            if (layout === 'comic') {
+                sizeStyle = `width: ${item.width || 300}px; height: ${item.height || 200}px;`;
+            }
+
+            let contentHTML = '';
+            if (item.imagePosition === 'above' && imageHTML) {
+                contentHTML = imageHTML + `<h3 class="news-title">${item.title}</h3><p class="news-text">${item.content}</p>`;
+            } else if (item.imagePosition === 'below' && imageHTML) {
+                contentHTML = `<h3 class="news-title">${item.title}</h3><p class="news-text">${item.content}</p>` + imageHTML;
+            } else {
+                contentHTML = `<h3 class="news-title">${item.title}</h3><p class="news-text">${item.content}</p>`;
+            }
+
+            const resizeHandle = layout === 'comic' ? '<div class="resize-handle" data-resize="true"></div>' : '';
+
+            return `
+                <div class="news-item ${extraClass}" data-id="${item.id}" draggable="true" style="${backgroundStyle}${sizeStyle}">
+                    <span class="drag-handle">⋮⋮</span>
+                    <div class="item-controls">
+                        <button class="btn-secondary" onclick="editItem(${item.id})">✏️</button>
+                        <button class="btn-danger" onclick="deleteItem(${item.id})">🗑️</button>
+                    </div>
+                    <div class="news-content">
+                        ${contentHTML}
+                    </div>
+                    ${resizeHandle}
+                </div>
+            `;
+        }
+
+        function renderSectionItem(item, layout) {
+            let imageHTML = '';
+            let backgroundStyle = '';
+            let extraClass = '';
+
+            if (item.image) {
+                if (item.imagePosition === 'background') {
+                    backgroundStyle = `background-image: url(${item.image});`;
+                    extraClass = 'image-background';
+                } else {
+                    imageHTML = `<img src="${item.image}" class="section-image">`;
+                }
+            }
+
+            let contentHTML = '';
+            if (item.imagePosition === 'above' && imageHTML) {
+                contentHTML = imageHTML + `<h2 class="section-title">${item.title}</h2>`;
+            } else if (item.imagePosition === 'below' && imageHTML) {
+                contentHTML = `<h2 class="section-title">${item.title}</h2>` + imageHTML;
+            } else {
+                contentHTML = `<h2 class="section-title">${item.title}</h2>`;
+            }
+
+            return `
+                <div class="section-item ${extraClass}" data-id="${item.id}" draggable="true" style="${backgroundStyle}">
+                    <span class="drag-handle">⋮⋮</span>
+                    <div class="item-controls">
+                        <button class="btn-secondary" onclick="editItem(${item.id})">✏️</button>
+                        <button class="btn-danger" onclick="deleteItem(${item.id})">🗑️</button>
+                    </div>
+                    <div class="section-content">
+                        ${contentHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Setup resize handles for comic layout
+        function setupResizeHandles() {
+            const resizeHandles = document.querySelectorAll('.resize-handle');
+            
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', initResize);
+            });
+        }
+
+        let currentResizeElement = null;
+        let startX, startY, startWidth, startHeight;
+
+        function initResize(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            currentResizeElement = e.target.closest('.news-item');
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = currentResizeElement.offsetWidth;
+            startHeight = currentResizeElement.offsetHeight;
+            
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function doResize(e) {
+            if (!currentResizeElement) return;
+            
+            const newWidth = Math.max(150, startWidth + (e.clientX - startX));
+            const newHeight = Math.max(100, startHeight + (e.clientY - startY));
+            
+            currentResizeElement.style.width = newWidth + 'px';
+            currentResizeElement.style.height = newHeight + 'px';
+            
+            // Update item data
+            const id = parseInt(currentResizeElement.dataset.id);
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.width = newWidth;
+                item.height = newHeight;
+            }
+        }
+
+        function stopResize() {
+            currentResizeElement = null;
+            document.removeEventListener('mousemove', doResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        // Drag and Drop
+        function setupDragAndDrop() {
+            const draggables = document.querySelectorAll('[draggable="true"]');
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', (e) => {
+                    // Don't drag if clicking on resize handle
+                    if (e.target.dataset.resize) {
+                        e.preventDefault();
+                        return;
+                    }
+                    draggable.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', draggable.dataset.id);
+                });
+
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                });
+
+                draggable.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const draggingEl = document.querySelector('.dragging');
+                    if (draggingEl !== draggable) {
+                        draggable.classList.add('drag-over');
+                    }
+                });
+
+                draggable.addEventListener('dragleave', () => {
+                    draggable.classList.remove('drag-over');
+                });
+
+                draggable.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+                    const targetId = parseInt(draggable.dataset.id);
+                    
+                    if (draggedId !== targetId) {
+                        const draggedIndex = items.findIndex(item => item.id === draggedId);
+                        const targetIndex = items.findIndex(item => item.id === targetId);
+                        
+                        const [removed] = items.splice(draggedIndex, 1);
+                        items.splice(targetIndex, 0, removed);
+                        
+                        renderItems();
+                    }
+                });
+            });
+        }
+
+        // Editar item
+        function editItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            // Reset edit state
+            editImageToRemove = false;
+            newEditImage = null;
+            document.getElementById('editImage').value = '';
+            document.getElementById('editImagePreview').style.display = 'none';
+
+            document.getElementById('editItemId').value = id;
+            document.getElementById('editItemType').value = item.type;
+            document.getElementById('editTitle').value = item.title;
+            
+            // Show/hide content field based on type
+            const contentContainer = document.getElementById('editContentContainer');
+            if (item.type === 'news') {
+                document.getElementById('editContent').value = item.content;
+                contentContainer.style.display = 'block';
+            } else {
+                contentContainer.style.display = 'none';
+            }
+
+            // Show current image if exists
+            const currentImageContainer = document.getElementById('currentImageContainer');
+            const currentImagePreview = document.getElementById('currentImagePreview');
+            
+            if (item.image) {
+                currentImagePreview.src = item.image;
+                currentImageContainer.style.display = 'block';
+            } else {
+                currentImageContainer.style.display = 'none';
+            }
+
+            // Set image position
+            const positionRadio = document.querySelector(`input[name="editImagePosition"][value="${item.imagePosition}"]`);
+            if (positionRadio) positionRadio.checked = true;
+
+            document.getElementById('modalTitle').textContent = item.type === 'news' ? 'Editar Noticia' : 'Editar Sección';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function removeCurrentImage() {
+            editImageToRemove = true;
+            document.getElementById('currentImageContainer').style.display = 'none';
+        }
+
+        function saveEdit() {
+            const id = parseInt(document.getElementById('editItemId').value);
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            item.title = document.getElementById('editTitle').value;
+            if (item.type === 'news') {
+                item.content = document.getElementById('editContent').value;
+            }
+
+            item.imagePosition = document.querySelector('input[name="editImagePosition"]:checked').value;
+
+            // Handle image changes
+            if (editImageToRemove && !newEditImage) {
+                // Remove image
+                item.image = null;
+            } else if (newEditImage) {
+                // New image uploaded
+                item.image = newEditImage;
+            }
+            // If neither, keep existing image
+
+            renderItems();
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editImage').value = '';
+            document.getElementById('editImagePreview').style.display = 'none';
+            editImageToRemove = false;
+            newEditImage = null;
+        }
+
+        // Eliminar item
+        function deleteItem(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este elemento?')) {
+                items = items.filter(item => item.id !== id);
+                renderItems();
+            }
+        }
+
+        // Actualizar layout
+        function updateLayout() {
+            const layout = document.getElementById('layoutStyle').value;
+            const container = document.getElementById('newsContainer');
+            const columnSelector = document.getElementById('columnSelector');
+            
+            // Reset classes
+            container.className = 'news-container';
+            
+            // Show/hide column selector
+            if (layout === 'columns') {
+                columnSelector.classList.add('visible');
+                const columnCount = document.getElementById('columnCount').value;
+                container.classList.add(`columns-${columnCount}`);
+            } else {
+                columnSelector.classList.remove('visible');
+                
+                if (layout === 'comic') {
+                    container.classList.add('comic-layout');
+                }
+            }
+            
+            renderItems();
+        }
+
+        // Traducción usando LibreTranslate API (gratuita y sin límites estrictos)
+        async function translateText(text, sourceLang, targetLang) {
+            // Usar múltiples servicios de traducción como fallback
+            
+            // Opción 1: MyMemory (más confiable)
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`);
+                const data = await response.json();
+                
+                if (data.responseStatus === 200 && data.responseData.translatedText) {
+                    // MyMemory a veces devuelve mensajes de error como traducción
+                    const translated = data.responseData.translatedText;
+                    if (!translated.includes('MYMEMORY WARNING') && !translated.includes('PLEASE SELECT')) {
+                        return translated;
+                    }
+                }
+            } catch (error) {
+                console.log('MyMemory falló, intentando alternativa...');
+            }
+
+            // Opción 2: Lingva Translate (instancia pública de Google Translate)
+            try {
+                const response = await fetch(`https://lingva.ml/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(text)}`);
+                const data = await response.json();
+                if (data.translation) {
+                    return data.translation;
+                }
+            } catch (error) {
+                console.log('Lingva falló, intentando alternativa...');
+            }
+
+            // Opción 3: Otra instancia de Lingva
+            try {
+                const response = await fetch(`https://translate.plausibility.cloud/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(text)}`);
+                const data = await response.json();
+                if (data.translation) {
+                    return data.translation;
+                }
+            } catch (error) {
+                console.log('Plausibility falló');
+            }
+
+            // Si todo falla, devolver el texto original
+            console.warn('Todos los servicios de traducción fallaron');
+            return text;
+        }
+
+        async function translateNewsletter() {
+            const sourceLang = document.getElementById('sourceLanguage').value;
+            const targetLang = document.getElementById('targetLanguage').value;
+            const statusDiv = document.getElementById('translationStatus');
+            
+            if (!targetLang) {
+                alert('Por favor, selecciona un idioma de destino.');
+                return;
+            }
+
+            if (sourceLang === targetLang) {
+                alert('El idioma de origen y destino son iguales.');
+                return;
+            }
+
+            // Guardar textos originales
+            items.forEach(item => {
+                if (!item.originalTitle) item.originalTitle = item.title;
+                if (item.type === 'news' && !item.originalContent) {
+                    item.originalContent = item.content;
+                }
+            });
+
+            // Mostrar loading
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = '<div class="spinner"></div><p>Traduciendo boletín...</p>';
+            document.body.appendChild(loadingOverlay);
+
+            statusDiv.innerHTML = '<div class="translation-status loading">🔄 Traduciendo...</div>';
+
+            try {
+                let totalItems = items.length + 1; // +1 for header
+                let translatedCount = 0;
+
+                // Traducir título del boletín
+                const headerTitle = document.getElementById('newsletterTitle').value;
+                const originalHeaderTitle = headerTitle;
+                
+                try {
+                    const translatedHeaderTitle = await translateText(headerTitle, sourceLang, targetLang);
+                    document.getElementById('newsletterTitle').value = translatedHeaderTitle;
+                    translatedCount++;
+                    loadingOverlay.querySelector('p').textContent = `Traduciendo... (${translatedCount}/${totalItems})`;
+                } catch (e) {
+                    console.error('Error traduciendo título:', e);
+                }
+
+                // Traducir items uno por uno
+                for (let item of items) {
+                    try {
+                        // Traducir título
+                        const translatedTitle = await translateText(item.originalTitle, sourceLang, targetLang);
+                        item.title = translatedTitle;
+                        
+                        // Traducir contenido si es noticia
+                        if (item.type === 'news' && item.originalContent) {
+                            const translatedContent = await translateText(item.originalContent, sourceLang, targetLang);
+                            item.content = translatedContent;
+                        }
+                        
+                        translatedCount++;
+                        loadingOverlay.querySelector('p').textContent = `Traduciendo... (${translatedCount}/${totalItems})`;
+                        
+                        // Pequeña pausa para no sobrecargar la API
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                    } catch (error) {
+                        console.error('Error traduciendo item:', error);
+                    }
+                }
+				
+				updateNewsletterHeader();
+                renderItems();
+                statusDiv.innerHTML = '<div class="translation-status success">✅ Traducción completada</div>';
+                
+            } catch (error) {
+                console.error('Error durante la traducción:', error);
+                statusDiv.innerHTML = '<div class="translation-status error">❌ Error durante la traducción. Intenta de nuevo.</div>';
+            } finally {
+                document.body.removeChild(loadingOverlay);
+            }
+        }
+
+        function restoreOriginal() {
+            items.forEach(item => {
+                if (item.originalTitle) {
+                    item.title = item.originalTitle;
+                }
+                if (item.type === 'news' && item.originalContent) {
+                    item.content = item.originalContent;
+                }
+            });
+
+            // Restaurar título del boletín
+            document.getElementById('displayTitle').textContent = document.getElementById('newsletterTitle').value;
+
+            renderItems();
+            
+            const statusDiv = document.getElementById('translationStatus');
+            statusDiv.innerHTML = '<div class="translation-status success">✅ Texto original restaurado</div>';
+        }
+		
+		// Save to JSON
+        function saveToJSON() {
+            const data = {
+				title: document.getElementById('newsletterTitle').value,
+				headerImage: bannerImageData,
+				headerImagePos: document.querySelector('input[name="bannerPosition"]:checked')?.value || 'above',
+				layout: document.getElementById('layoutStyle').value,
+				items: items
+			};
+
+			const dataStr = JSON.stringify(data, null, 2);
+			const blob = new Blob([dataStr], { type: 'application/json' });
+			downloadFile(blob, 'boletin.json');
+        }
+
+        // Save to XML
+        function saveToXML() {
+		    const title = document.getElementById('newsletterTitle').value;
+            const bannerPosition = document.querySelector('input[name="bannerPosition"]:checked').value;
+			const layout = document.getElementById('layoutStyle').value;
+			
+            let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<newsletter>\n';
+            xml += `  <title>${escapeXML(title)}</title>\n`;
+            xml += `  <headerImage>${bannerImageData}</headerImage>\n`;
+            xml += `  <headerImagePos>${bannerPosition}</headerImagePos>\n`;
+            xml += `  <layout>${layout}</layout>\n`;
+            xml += '  <items>\n';
+
+            items.forEach(item => {
+                if (item.type === 'section') {
+                    xml += '    <section>\n';
+                    xml += `      <id>${item.id}</id>\n`;
+                    xml += `      <title>${escapeXML(item.title)}</title>\n`;
+                    xml += `      <image>${item.image || ''}</image>\n`;
+                    xml += `      <imagePosition>${item.imagePosition}</imagePosition>\n`;
+					xml += `      <originalTitle>${item.originalTitle}</originalTitle>\n`;
+                    xml += '    </section>\n';
+                } else {
+                    xml += '    <news>\n';
+                    xml += `      <id>${item.id}</id>\n`;
+                    xml += `      <title>${escapeXML(item.title)}</title>\n`;
+                    xml += `      <content>${escapeXML(item.content)}</content>\n`;
+                    xml += `      <image>${item.image || ''}</image>\n`;
+                    xml += `      <imagePosition>${item.imagePosition}</imagePosition>\n`;
+					xml += `      <originalTitle>${item.originalTitle}</originalTitle>\n`;
+					xml += `      <originalContent>${item.originalContent}</originalContent>\n`;
+                    if (item.width) xml += `      <width>${item.width}</width>\n`;
+                    if (item.height) xml += `      <height>${item.height}</height>\n`;
+                    xml += '    </news>\n';
+                }
+            });
+
+            xml += '  </items>\n</newsletter>';
+
+            const blob = new Blob([xml], { type: 'application/xml' });
+            downloadFile(blob, 'boletin.xml');
+        }
+
+        function escapeXML(str) {
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&apos;');
+        }
+
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Load file
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                
+                if (file.name.endsWith('.json')) {
+                    try {
+                        const data = JSON.parse(content);
+
+						items = data.items || [];
+						bannerImageData = data.headerImage || null;
+						document.getElementById('newsletterTitle').value = data.title || '';
+						document.getElementById('layoutStyle').value = data.layout || 'normal';
+
+						document.querySelector(`input[name="bannerPosition"][value="${data.headerImagePos}"]`)?.click();
+						  
+						updateNewsletterHeader();
+						syncNextItemId(items);
+                        renderItems();
+                        alert('Boletín cargado correctamente');
+                    } catch (error) {
+                        alert('Error al cargar el archivo JSON');
+                    }
+                } else if (file.name.endsWith('.xml')) {
+                    try {
+                        loadXML(content);
+                        alert('Boletín cargado correctamente');
+                    } catch (error) {
+                        console.error(error);
+                        alert('Error al cargar el archivo XML');
+                    }
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+		
+		function syncNextItemId(items) {
+			const maxId = items.reduce((max, item) =>
+				Math.max(max, item.id ?? -1), -1
+			);
+			nextItemId = maxId + 1;
+		}
+		
+		function loadXML(content) {
+			const parser = new DOMParser();
+			const xmlDoc = parser.parseFromString(content, 'text/xml');
+
+			// --- Header ---
+			const title = xmlDoc.querySelector('newsletter > title')?.textContent || '';
+			bannerImageData = xmlDoc.querySelector('newsletter > headerImage')?.textContent || null;
+			const headerImagePos = xmlDoc.querySelector('newsletter > headerImagePos')?.textContent || 'above';
+			const layout = xmlDoc.querySelector('newsletter > layout')?.textContent || 'normal';
+
+			document.getElementById('newsletterTitle').value = title;
+
+			// Radio button correcto
+			document
+				.querySelector(`input[name="bannerPosition"][value="${headerImagePos}"]`)
+				?.click();
+
+			document.getElementById('layoutStyle').value = layout;
+
+			// --- Items ---
+			const itemsElement = xmlDoc.querySelector('items');
+			if (!itemsElement) {
+				items = [];
+				renderItems();
+				return;
+			}
+
+			const importedItems = [];
+			const orderedItems = [];
+
+			// Sections
+			itemsElement.querySelectorAll('section').forEach(section => {
+				const idText = section.querySelector('id')?.textContent;
+				if (!idText) return;
+
+				importedItems.push({
+					id: Number(idText),
+					type: 'section',
+					title: section.querySelector('title')?.textContent || '',
+					image: section.querySelector('image')?.textContent || null,
+					imagePosition: section.querySelector('imagePosition')?.textContent || 'above',
+					originalTitle: section.querySelector('originalTitle')?.textContent || ''
+				});
+			});
+
+			// News
+			itemsElement.querySelectorAll('news').forEach(news => {
+				const idText = news.querySelector('id')?.textContent;
+				if (!idText) return;
+
+				importedItems.push({
+					id: Number(idText),
+					type: 'news',
+					title: news.querySelector('title')?.textContent || '',
+					content: news.querySelector('content')?.textContent || '',
+					image: news.querySelector('image')?.textContent || null,
+					imagePosition: news.querySelector('imagePosition')?.textContent || 'above',
+					originalTitle: news.querySelector('originalTitle')?.textContent || '',
+					originalContent: news.querySelector('originalContent')?.textContent || '',
+					width: news.querySelector('width')?.textContent
+						? Number(news.querySelector('width').textContent)
+						: null,
+					height: news.querySelector('height')?.textContent
+						? Number(news.querySelector('height').textContent)
+						: null
+				});
+			});
+
+			// Mantener el orden exacto del XML
+			itemsElement.childNodes.forEach(node => {
+				if (node.nodeType !== 1) return;
+
+				const idText = node.querySelector('id')?.textContent;
+				if (!idText) return;
+
+				const item = importedItems.find(i => i.id === Number(idText));
+				if (item) orderedItems.push(item);
+			});
+
+			items = orderedItems;
+
+			syncNextItemId(items);
+			updateNewsletterHeader();
+			renderItems();
+		}
+
+
+        function generatePDF() {
+			const element = document.getElementById('previewPanel');
+			if (!element) return;
+
+			const layout = document.getElementById('layoutStyle')?.value || 'normal';
+			const isComic = layout === 'comic';
+
+			// 1. Ocultar controles del editor
+			const controls = element.querySelectorAll(
+				'.item-controls, .drag-handle, .resize-handle'
+			);
+			controls.forEach(c => c.style.display = 'none');
+
+			// 2. Opciones base
+			const opt = {
+				margin: 10,
+				filename: 'boletin.pdf',
+				image: { type: 'jpeg', quality: 0.98 },
+				html2canvas: {
+					scale: 2,
+					useCORS: true,
+					logging: false
+				},
+				jsPDF: {
+					unit: 'mm',
+					format: 'a4',
+					orientation: 'portrait'
+				}
+			};
+
+			// 3. Pagebreaks (CONFIGURACIÓN SEGURA)
+			opt.pagebreak = {
+				mode: ['css', 'legacy'],
+				before: isComic ? '.section-header' : null,
+				avoid: ['.section-header']
+			};
+
+			// 4. Estilos temporales SOLO para PDF
+			const style = document.createElement('style');
+			style.id = 'pdf-styles';
+			style.textContent = `
+				/* Nunca partir títulos de sección */
+				.section-header {
+					page-break-inside: avoid !important;
+					break-inside: avoid !important;
+				}
+
+				/* Las noticias PUEDEN romper página */
+				.news-item {
+					page-break-inside: auto !important;
+					break-inside: auto !important;
+				}
+			`;
+			document.head.appendChild(style);
+
+			// 5. Generar PDF con limpieza garantizada
+			html2pdf()
+				.set(opt)
+				.from(element)
+				.save()
+				.catch(err => console.error('PDF error:', err))
+				.finally(() => {
+					// Restaurar UI
+					controls.forEach(c => c.style.display = '');
+					document.getElementById('pdf-styles')?.remove();
+				});
+		}
+
+
+        // Limpiar todo
+        function clearAll() {
+            if (confirm('¿Estás seguro de que deseas eliminar todo el contenido?')) {
+                items = [];
+                bannerImageData = null;
+                document.getElementById('newsletterTitle').value = 'Boletín Informativo';
+                document.getElementById('displayTitle').textContent = 'Boletín Informativo';
+                document.getElementById('newsletterHeader').className = 'newsletter-header';
+                document.getElementById('newsletterHeader').style.backgroundImage = '';
+                document.getElementById('bannerPreview').style.display = 'none';
+                document.getElementById('bannerPreview').src = '';
+                document.getElementById('translationStatus').innerHTML = '';
+                renderItems();
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLayout();
+        });
+    </script>
+</body>
+</html>
