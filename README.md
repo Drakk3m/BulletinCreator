@@ -118,10 +118,17 @@ All images are stored as **Base64** so the newsletter remains fully self-contain
 
 ## 📦 File Structure
 
-project/
+NewsletterCreator
 │
 ├── BoletinCreator.html
-└── README.md
+├── README.md
+│
+└── assets
+    ├── banner_newsletter_creator.png
+    ├── screenshot_editor.png
+    ├── screenshot_layouts.png
+    ├── screenshot_layouts_columns.png
+    └── screenshot_translation.png
 
 
 The entire application lives inside a **single HTML file**, making it easy to distribute and use offline.
